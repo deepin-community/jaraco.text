@@ -1,0 +1,26 @@
+jaraco.text (3.6.0-1) unstable; urgency=medium
+
+  [ Jeroen Ploemen ]
+  * New upstream version 3.6.0
+  * Copyright:
+    + use my debian.org email address.
+    + bump upstream year.
+  * Patches: refresh 01.
+
+  [ Debian Janitor ]
+  * Set upstream metadata fields: Bug-Database, Bug-Submit, Repository,
+    Repository-Browse.
+
+ -- Jeroen Ploemen <jcfp@debian.org>  Thu, 11 Nov 2021 18:30:28 +0000
+
+jaraco.text (3.5.0-2) unstable; urgency=medium
+
+  * Control: correct VCS URLs.
+
+ -- Jeroen Ploemen <jcfp@debian.org>  Tue, 06 Jul 2021 08:04:43 +0000
+
+jaraco.text (3.5.0-1) experimental; urgency=medium
+
+  * Initial release. (Closes: #985731)
+
+ -- Jeroen Ploemen <jcfp@debian.org>  Fri, 26 Mar 2021 09:08:13 +0000

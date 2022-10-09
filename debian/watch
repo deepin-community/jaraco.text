@@ -1,0 +1,4 @@
+version=4
+opts=filenamemangle=s/.+\/v?(\d\S*)\.tar\.gz/jaraco.text-$1\.tar\.gz/ \
+ https://github.com/jaraco/jaraco.text/tags \
+ .*/jaraco.text/archive.*/v?([\d\.]+)\.tar\.gz

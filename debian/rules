@@ -1,0 +1,8 @@
+#!/usr/bin/make -f
+
+export PYBUILD_NAME=jaraco.text
+export PYBUILD_BEFORE_TEST=cp -va "jaraco/text/Lorem ipsum.txt" "{build_dir}/jaraco/text/"
+export PYBUILD_AFTER_TEST=rm -vf "{build_dir}/jaraco/text/Lorem ipsum.txt"
+
+%:
+	dh $@ --with python3 --buildsystem=pybuild

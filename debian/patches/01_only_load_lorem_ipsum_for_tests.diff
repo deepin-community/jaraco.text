@@ -1,0 +1,29 @@
+# Only load lorem ipsum for tests
+--- a/jaraco/text/__init__.py
++++ b/jaraco/text/__init__.py
+@@ -177,6 +177,7 @@
+     Wrap lines of text, retaining existing newlines as
+     paragraph markers.
+ 
++    >>> lorem_ipsum: str = files(__name__).joinpath('Lorem ipsum.txt').read_text()
+     >>> print(wrap(lorem_ipsum))
+     Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+     eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad
+@@ -209,6 +210,7 @@
+     r"""
+     Given a multi-line string, return an unwrapped version.
+ 
++    >>> lorem_ipsum: str = files(__name__).joinpath('Lorem ipsum.txt').read_text()
+     >>> wrapped = wrap(lorem_ipsum)
+     >>> wrapped.count('\n')
+     20
+@@ -225,9 +227,6 @@
+     return '\n'.join(cleaned)
+ 
+ 
+-lorem_ipsum: str = files(__name__).joinpath('Lorem ipsum.txt').read_text()
+-
+-
+ class Splitter(object):
+     """object that will split a string with the given arguments for each call
+ 
