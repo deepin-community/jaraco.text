@@ -1,3 +1,96 @@
+v4.0.0
+======
+
+Deprecations and Removals
+-------------------------
+
+- Made 'inflect' an optional dependency. The show-newlines script now will crash unless jaraco.text[inflect] is installed.
+
+
+v3.14.0
+=======
+
+Features
+--------
+
+- Add new 'clean' function, extracted from 'yield_lines'.
+
+
+v3.13.1
+=======
+
+Bugfixes
+--------
+
+- Fix EncodingWarning.
+
+
+v3.13.0
+=======
+
+Features
+--------
+
+- Add 'lines_from' function.
+
+
+v3.12.1
+=======
+
+No significant changes.
+
+
+v3.12.0
+=======
+
+Features
+--------
+
+- Require Python 3.8 or later.
+
+
+v3.11.1
+=======
+
+Fixed ``EncodingWarnings`` when reading/writing text.
+
+v3.11.0
+=======
+
+Added ``strip-prefix`` script.
+
+v3.10.0
+=======
+
+Prefer ``casefold`` in ``FoldedCase``.
+
+v3.9.1
+======
+
+#10: Fixed broken tests in ``read_newlines`` and ``show-newlines``.
+
+v3.9.0
+======
+
+Add ``jaraco.text.show-newlines`` script.
+
+v3.8.1
+======
+
+Refreshed packaging.
+
+Enrolled with Tidelift.
+
+v3.8.0
+======
+
+Added ``layouts`` module and ``to-qwerty`` and ``to-dvorak`` scripts.
+
+v3.7.0
+======
+
+Introducing ``yield_lines``, ``drop_comment``, and ``join_continuation``.
+
 v3.6.0
 ======
 

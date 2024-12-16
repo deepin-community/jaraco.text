@@ -3,24 +3,27 @@ Homepage: https://github.com/jaraco/jaraco.text
 Section: python
 Priority: optional
 Maintainer: Jeroen Ploemen <jcfp@debian.org>
-Uploaders: Debian Python Team <team+python@tracker.debian.org>
 Build-Depends:
  debhelper-compat (= 13),
  dh-python,
+ pybuild-plugin-pyproject,
  python3-all,
- python3-pytest <!nocheck>,
+ python3-autocommand <!nocheck>,
+ python3-inflect <!nocheck>,
+ python3-jaraco.context <!nocheck>,
  python3-jaraco.functools <!nocheck>,
+ python3-pytest <!nocheck>,
  python3-setuptools,
  python3-setuptools-scm
-Standards-Version: 4.5.1
-Vcs-Git: https://salsa.debian.org/python-team/packages/jaraco.text.git
-Vcs-Browser: https://salsa.debian.org/python-team/packages/jaraco.text
+Standards-Version: 4.7.0
+Vcs-Git: https://salsa.debian.org/jcfp/jaraco.text.git
+Vcs-Browser: https://salsa.debian.org/jcfp/jaraco.text
 Testsuite: autopkgtest-pkg-python
 Rules-Requires-Root: no
 
 Package: python3-jaraco.text
 Architecture: all
-Depends: ${misc:Depends}, ${python3:Depends}
+Depends: ${misc:Depends}, ${python3:Depends}, python3-inflect
 Description: jaraco text manipulation functions
  Text manipulation functions and classes, mostly needed as a dependency
  of other projects involving the same upstream developer, including
