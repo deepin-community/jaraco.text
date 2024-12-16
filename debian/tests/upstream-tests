@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -e -u
+
+DIR="/usr/lib/python3/dist-packages/jaraco/text/"
+
+# Symlink testdata
+ln -vs "$(pwd)/jaraco/text/Lorem ipsum.txt" "$DIR"
+
+cd "$DIR"
+
+for py in $(py3versions -s 2>/dev/null); do
+	echo "Running testsuite with $py:"
+	$py -m pytest --doctest-modules .
+done

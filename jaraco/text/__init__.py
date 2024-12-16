@@ -1,13 +1,16 @@
-import re
-import itertools
-import textwrap
 import functools
+import itertools
+import re
+import textwrap
+
+from typing import Iterable
 
 try:
     from importlib.resources import files  # type: ignore
 except ImportError:  # pragma: nocover
     from importlib_resources import files  # type: ignore
 
+from jaraco.context import ExceptionTrap
 from jaraco.functools import compose, method_cache
 
 
@@ -65,7 +68,7 @@ class FoldedCase(str):
     >>> s in ["Hello World"]
     True
 
-    You may test for set inclusion, but candidate and elements
+    Allows testing for set inclusion, but candidate and elements
     must both be folded.
 
     >>> FoldedCase("Hello World") in {s}
@@ -91,43 +94,51 @@ class FoldedCase(str):
 
     >>> FoldedCase('hello') > FoldedCase('Hello')
     False
+
+    >>> FoldedCase('ß') == FoldedCase('ss')
+    True
     """
 
     def __lt__(self, other):
-        return self.lower() < other.lower()
+        return self.casefold() < other.casefold()
 
     def __gt__(self, other):
-        return self.lower() > other.lower()
+        return self.casefold() > other.casefold()
 
     def __eq__(self, other):
-        return self.lower() == other.lower()
+        return self.casefold() == other.casefold()
 
     def __ne__(self, other):
-        return self.lower() != other.lower()
+        return self.casefold() != other.casefold()
 
     def __hash__(self):
-        return hash(self.lower())
+        return hash(self.casefold())
 
     def __contains__(self, other):
-        return super().lower().__contains__(other.lower())
+        return super().casefold().__contains__(other.casefold())
 
     def in_(self, other):
         "Does self appear in other?"
         return self in FoldedCase(other)
 
-    # cache lower since it's likely to be called frequently.
+    # cache casefold since it's likely to be called frequently.
     @method_cache
-    def lower(self):
-        return super().lower()
+    def casefold(self):
+        return super().casefold()
 
     def index(self, sub):
-        return self.lower().index(sub.lower())
+        return self.casefold().index(sub.casefold())
 
     def split(self, splitter=' ', maxsplit=0):
         pattern = re.compile(re.escape(splitter), re.I)
         return pattern.split(self, maxsplit)
 
 
+# Python 3.8 compatibility
+_unicode_trap = ExceptionTrap(UnicodeDecodeError)
+
+
+@_unicode_trap.passes
 def is_decodable(value):
     r"""
     Return True if the supplied value is decodable (using the default
@@ -138,14 +149,7 @@ def is_decodable(value):
     >>> is_decodable(b'\x32')
     True
     """
-    # TODO: This code could be expressed more consisely and directly
-    # with a jaraco.context.ExceptionTrap, but that adds an unfortunate
-    # long dependency tree, so for now, use boolean literals.
-    try:
-        value.decode()
-    except UnicodeDecodeError:
-        return False
-    return True
+    value.decode()
 
 
 def is_binary(value):
@@ -225,10 +229,12 @@ def unwrap(s):
     return '\n'.join(cleaned)
 
 
-lorem_ipsum: str = files(__name__).joinpath('Lorem ipsum.txt').read_text()
+lorem_ipsum: str = (
+    files(__name__).joinpath('Lorem ipsum.txt').read_text(encoding='utf-8')
+)
 
 
-class Splitter(object):
+class Splitter:
     """object that will split a string with the given arguments for each call
 
     >>> s = Splitter(',')
@@ -278,7 +284,7 @@ class WordSet(tuple):
     >>> WordSet.parse("myABCClass")
     ('my', 'ABC', 'Class')
 
-    The result is a WordSet, so you can get the form you need.
+    The result is a WordSet, providing access to other forms.
 
     >>> WordSet.parse("myABCClass").underscore_separated()
     'my_ABC_Class'
@@ -365,14 +371,10 @@ class WordSet(tuple):
         return self.trim_left(item).trim_right(item)
 
     def __getitem__(self, item):
-        result = super(WordSet, self).__getitem__(item)
+        result = super().__getitem__(item)
         if isinstance(item, slice):
             result = WordSet(result)
         return result
-
-    # for compatibility with Python 2
-    def __getslice__(self, i, j):  # pragma: nocover
-        return self.__getitem__(slice(i, j))
 
     @classmethod
     def parse(cls, identifier):
@@ -527,3 +529,119 @@ def normalize_newlines(text):
     newlines = ['\r\n', '\r', '\n', '\u0085', '\u2028', '\u2029']
     pattern = '|'.join(newlines)
     return re.sub(pattern, '\n', text)
+
+
+def _nonblank(str):
+    return str and not str.startswith('#')
+
+
+@functools.singledispatch
+def yield_lines(iterable):
+    r"""
+    Yield valid lines of a string or iterable.
+
+    >>> list(yield_lines(''))
+    []
+    >>> list(yield_lines(['foo', 'bar']))
+    ['foo', 'bar']
+    >>> list(yield_lines('foo\nbar'))
+    ['foo', 'bar']
+    >>> list(yield_lines('\nfoo\n#bar\nbaz #comment'))
+    ['foo', 'baz #comment']
+    >>> list(yield_lines(['foo\nbar', 'baz', 'bing\n\n\n']))
+    ['foo', 'bar', 'baz', 'bing']
+    """
+    return itertools.chain.from_iterable(map(yield_lines, iterable))
+
+
+@yield_lines.register(str)
+def _(text):
+    return clean(text.splitlines())
+
+
+def clean(lines: Iterable[str]):
+    """
+    Yield non-blank, non-comment elements from lines.
+    """
+    return filter(_nonblank, map(str.strip, lines))
+
+
+def drop_comment(line):
+    """
+    Drop comments.
+
+    >>> drop_comment('foo # bar')
+    'foo'
+
+    A hash without a space may be in a URL.
+
+    >>> drop_comment('http://example.com/foo#bar')
+    'http://example.com/foo#bar'
+    """
+    return line.partition(' #')[0]
+
+
+def join_continuation(lines):
+    r"""
+    Join lines continued by a trailing backslash.
+
+    >>> list(join_continuation(['foo \\', 'bar', 'baz']))
+    ['foobar', 'baz']
+    >>> list(join_continuation(['foo \\', 'bar', 'baz']))
+    ['foobar', 'baz']
+    >>> list(join_continuation(['foo \\', 'bar \\', 'baz']))
+    ['foobarbaz']
+
+    Not sure why, but...
+    The character preceding the backslash is also elided.
+
+    >>> list(join_continuation(['goo\\', 'dly']))
+    ['godly']
+
+    A terrible idea, but...
+    If no line is available to continue, suppress the lines.
+
+    >>> list(join_continuation(['foo', 'bar\\', 'baz\\']))
+    ['foo']
+    """
+    lines = iter(lines)
+    for item in lines:
+        while item.endswith('\\'):
+            try:
+                item = item[:-2].strip() + next(lines)
+            except StopIteration:
+                return
+        yield item
+
+
+def read_newlines(filename, limit=1024):
+    r"""
+    >>> tmp_path = getfixture('tmp_path')
+    >>> filename = tmp_path / 'out.txt'
+    >>> _ = filename.write_text('foo\n', newline='', encoding='utf-8')
+    >>> read_newlines(filename)
+    '\n'
+    >>> _ = filename.write_text('foo\r\n', newline='', encoding='utf-8')
+    >>> read_newlines(filename)
+    '\r\n'
+    >>> _ = filename.write_text('foo\r\nbar\nbing\r', newline='', encoding='utf-8')
+    >>> read_newlines(filename)
+    ('\r', '\n', '\r\n')
+    """
+    with open(filename, encoding='utf-8') as fp:
+        fp.read(limit)
+    return fp.newlines
+
+
+def lines_from(input):
+    """
+    Generate lines from a :class:`importlib.resources.abc.Traversable` path.
+
+    >>> lines = lines_from(files(__name__).joinpath('Lorem ipsum.txt'))
+    >>> next(lines)
+    'Lorem ipsum...'
+    >>> next(lines)
+    'Curabitur pretium...'
+    """
+    with input.open(encoding='utf-8') as stream:
+        yield from stream
